@@ -8,7 +8,7 @@ movement_data = {
 }
 
 last_update_time = 0
-TIMEOUT = 10
+TIMEOUT = 0.5
 
 EXPECTED_KEYS = {
     "up/down": int,
