@@ -1,5 +1,4 @@
 from flask import request
-from flask_sock import Sock
 import time
 import json
 
@@ -10,11 +9,27 @@ movement_data = {
 
 last_update_time = 0
 TIMEOUT = 2
-
 connected_clients = set()
 
-def register_routes(app):
-    sock = Sock(app)
+def register_routes(app, sock):
+
+    @sock.route("/ws")
+    def movement_ws(ws):
+        global movement_data, last_update_time
+
+        connected_clients.add(ws)
+        print("ESP32 connected via WebSocket")
+
+        try:
+            while True:
+                if (time.time() - last_update_time) > TIMEOUT:
+                    ws.send(json.dumps({"up/down": 1950, "left/right": 1950, "status": "timeout"}))
+                ws.receive(timeout=TIMEOUT)
+
+        except Exception as e:
+            print(f"ESP32 disconnected: {e}")
+        finally:
+            connected_clients.discard(ws)
 
     @app.route("/movement", methods=["POST"])
     def movement():
@@ -32,7 +47,6 @@ def register_routes(app):
 
         last_update_time = time.time()
 
-        # Push to all connected ESP32 clients
         dead_clients = set()
         for client in connected_clients:
             try:
@@ -43,24 +57,3 @@ def register_routes(app):
         connected_clients.difference_update(dead_clients)
 
         return {"status": "ok"}
-
-    @sock.route("/ws")
-    def movement_ws(ws):
-        global movement_data, last_update_time
-
-        connected_clients.add(ws)
-        print("ESP32 connected via WebSocket")
-
-        try:
-            while True:
-                # Handle timeout — push neutral values if controller goes silent
-                if (time.time() - last_update_time) > TIMEOUT:
-                    ws.send(json.dumps({"up/down": 1950, "left/right": 1950, "status": "timeout"}))
-
-                # Keep connection alive / receive any incoming messages
-                ws.receive(timeout=TIMEOUT)
-
-        except Exception:
-            print("ESP32 disconnected")
-        finally:
-            connected_clients.discard(ws)
