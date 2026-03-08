@@ -13,12 +13,35 @@ connected_clients = set()
 
 def register_routes(app, sock):
 
+    @sock.route("/ws_input")
+    def input_ws(ws):
+        global movement_data, last_update_time
+        print("Controller connected via WebSocket")
+        try:
+            while True:
+                data = ws.receive()
+                if data:
+                    parsed = json.loads(data)
+                    movement_data["up/down"] = max(0, min(int(parsed["up/down"]), 4095))
+                    movement_data["left/right"] = max(0, min(int(parsed["left/right"]), 4095))
+                    last_update_time = time.time()
+
+                    dead_clients = set()
+                    for client in connected_clients:
+                        try:
+                            client.send(json.dumps(movement_data))
+                        except Exception:
+                            dead_clients.add(client)
+                    connected_clients.difference_update(dead_clients)
+
+        except Exception as e:
+            print(f"Controller disconnected: {e}")
+
     @sock.route("/ws")
     def movement_ws(ws):
         global movement_data, last_update_time
-
         connected_clients.add(ws)
-        print("ESP32 connected via WebSocket")
+        print("Car ESP32 connected via WebSocket")
 
         try:
             while True:
@@ -27,33 +50,6 @@ def register_routes(app, sock):
                 ws.receive(timeout=TIMEOUT)
 
         except Exception as e:
-            print(f"ESP32 disconnected: {e}")
+            print(f"Car ESP32 disconnected: {e}")
         finally:
             connected_clients.discard(ws)
-
-    @app.route("/movement", methods=["POST"])
-    def movement():
-        global movement_data, last_update_time
-
-        json_data = request.get_json()
-
-        if not json_data:
-            return {"error": "Invalid JSON"}, 400
-
-        movement_data = {
-            "up/down": max(0, min(json_data["up/down"], 4095)),
-            "left/right": max(0, min(json_data["left/right"], 4095)),
-        }
-
-        last_update_time = time.time()
-
-        dead_clients = set()
-        for client in connected_clients:
-            try:
-                client.send(json.dumps(movement_data))
-            except Exception:
-                dead_clients.add(client)
-
-        connected_clients.difference_update(dead_clients)
-
-        return {"status": "ok"}
