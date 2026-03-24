@@ -8,7 +8,7 @@ movement_data = {
 }
 
 last_update_time = 0
-TIMEOUT = 2
+TIMEOUT = 5
 connected_clients = set()
 
 def register_routes(app, sock):
