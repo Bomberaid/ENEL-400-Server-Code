@@ -6,9 +6,9 @@ import json
 movement_data = {
     "up/down": 1950,
     "left/right": 1950,
-    "kp": 0.0,
-    "ki": 0.0,
-    "kd": 0.0,
+    "kp": 2.0,
+    "ki": 0.5,
+    "kd": 0.1,
 }
 
 last_update_time = 0
