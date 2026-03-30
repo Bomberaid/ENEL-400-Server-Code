@@ -31,9 +31,9 @@ def register_routes(app):
         movement_data = {
             "up/down": max(0, min(json_data["up/down"], 4095)),
             "left/right": max(0, min(json_data["left/right"], 4095)),
-            "kp": json_data.get("kp", movement_data["kp"]),
-            "ki": json_data.get("ki", movement_data["ki"]),
-            "kd": json_data.get("kd", movement_data["kd"]),
+            "kp": json_data["kp"],
+            "ki": json_data["ki"],
+            "kd": json_data["kd"],
         }
 
         last_update_time = time.time()
@@ -61,7 +61,7 @@ def register_routes(app):
             while True:
                 # Handle timeout — push neutral values if controller goes silent
                 if (time.time() - last_update_time) > TIMEOUT:
-                    ws.send(json.dumps({"up/down": 1950, "left/right": 1950, "kp": 0.0, "ki": 0.0, "kd": 0.0, "status": "timeout"}))
+                    ws.send(json.dumps({"up/down": 1950, "left/right": 1950, "kp": 2.0, "ki": 0.5, "kd": 0.1, "status": "timeout"}))
 
                 # Keep connection alive / receive any incoming messages
                 ws.receive(timeout=TIMEOUT)
