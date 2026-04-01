@@ -11,6 +11,7 @@ movement_data = {
     "kp": 2.0,
     "ki": 0.5,
     "kd": 0.1,
+    "connection_type": "unknown"
 }
 
 last_update_time = 0
@@ -36,6 +37,7 @@ def register_routes(app, sock):
                     movement_data["kp"] = float(parsed["kp"])
                     movement_data["ki"] = float(parsed["ki"])
                     movement_data["kd"] = float(parsed["kd"])
+                    movement_data["connection_type"] = parsed["connection_type"]
                     last_update_time = time.time()
 
                     dead_clients = set()
@@ -58,7 +60,7 @@ def register_routes(app, sock):
         try:
             while True:
                 if (time.time() - last_update_time) > TIMEOUT:
-                    ws.send(json.dumps({"up/down": 1950, "left/right": 1950, "speed": 0, "air": "Good", "temperature": 25, "kp": 2.0, "ki": 0.5, "kd": 0.1, "status": "timeout"}))
+                    ws.send(json.dumps({"up/down": 1950, "left/right": 1950, "speed": 0, "air": "Good", "temperature": 25, "kp": 2.0, "ki": 0.5, "kd": 0.1, "connection_type": "unknown", " status": "timeout"}))
                 ws.receive(timeout=TIMEOUT)
 
         except Exception as e:
